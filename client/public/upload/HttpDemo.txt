@@ -1,0 +1,71 @@
+import React, { Component } from 'react';
+import axios from 'axios';
+class HttpDemo extends Component {
+  
+    constructor() 
+    {
+        super();
+        this.state = {
+            Employees:[],
+            employeelist:[]
+        }
+
+       //https://jsonplaceholder.typicode.com/posts  
+        axios.get("https://myangularproject-49e63.firebaseio.com/Employees.json")
+            .then((response) => {
+                console.log("Response=" + JSON.stringify(response.data));
+                this.assignEmployees(response.data);
+            })
+            .catch((error) => {
+                console.log('There is error : ',error)
+            })
+    }
+    assignEmployees(data)
+        {
+            console.log("DATA = ",data);
+            this.setState({
+                Employees:data
+            })
+            console.log("EMPLOYEES = ",this.state.Employees);
+            this.setState({
+                employeelist:this.state.Employees.map((e)=><tr>
+                    <td align="center">{e.empno}</td>
+                    <td align="center">{e.name}</td>
+                    <td align="center">{e.doj}</td>
+                    <td align="center">{e.salary}</td>
+                    <td align="center">{e.city}</td>
+                    <td align="center">{e.phone}</td>
+                </tr>)
+            })
+        }
+ 
+    render() {
+        return (
+            <div>
+                <h1 align="center">Employees List</h1>
+                <table align="center" border="solid">
+                        <thead>
+                            <tr>
+                            <td align="center"><b>Employee No</b></td>
+                            <td align="center"><b>Employee Name</b></td>
+                            <td align="center"><b>Employee Date Of Joining</b></td>
+                            <td align="center"><b>Employee Salary</b></td>
+                            <td align="center"><b>Employee City</b></td>
+                            <td align="center"><b>Employee Phone</b></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                           {this.state.employeelist}
+                        </tbody>
+                </table>
+
+            </div>
+        );
+    }
+}
+export default HttpDemo;
+
+
+
+
+
