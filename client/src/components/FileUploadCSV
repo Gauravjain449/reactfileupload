@@ -1,0 +1,131 @@
+import React, { Component } from 'react';
+import { CSVReader } from 'react-papaparse';
+import ReactTable from 'react-table'
+import 'react-table/react-table.css'
+import axios from 'axios';
+
+class FileUploadCSV extends Component {
+    constructor(props) {
+        super(props);
+        this.fileInput = React.createRef();
+        this.state = ({
+            data: {}
+        })
+    }
+
+    handleReadCSV = (data) => {
+        //console.log(data);
+        this.setState({
+            data: data.data
+        })
+    }
+    handleSaveDatabase = async (e) => {
+        e.preventDefault();
+        console.log(this.state.data.length)
+        let chunk_size = 100
+        let arrData = []
+
+        for (let index = 0; index < this.state.data.length; index += chunk_size) {
+            arrData.push(this.state.data.slice(index, index + chunk_size));
+            // Do something if you want with the group
+        }
+
+        for (let i = 0; i < arrData.length; i++) {
+            await this.getTitle(arrData[i], i).then((res) => {
+                console.log(res);
+            })
+        }
+    }
+
+    getTitle = (data, index) => {
+        return new Promise((resolve, reject) => {
+            axios({
+                method: 'post',
+                url: 'http://localhost:5000/addrecords', headers: {},
+                data: {
+                    foo: data,
+                    index: index // This is the body part
+                }
+            }).then(response => {
+                return resolve(response.data)
+            })
+                .catch(error => {
+                    return reject(error.message)
+                })
+        })
+    }
+
+
+    handleOnError = (err, file, inputElem, reason) => {
+        console.log(err);
+    }
+
+    handleImportOffer = () => {
+        this.fileInput.current.click();
+    }
+
+    render() {
+        console.log(this.state.data)
+        return (
+            <div>
+                <CSVReader
+                    onFileLoaded={this.handleReadCSV}
+                    inputRef={this.fileInput}
+                    style={{ display: 'none' }}
+                    onError={this.handleOnError}
+                    configOptions={{ header: true /* Header row support */ }}
+                />
+                <button onClick={this.handleImportOffer}>Import</button>
+
+                {this.state.data.length > 0 &&
+                    (
+                        <div>
+                            <ReactTable
+                                data={this.state.data}
+                                columns={[
+                                    {
+                                        Header: "Country of Listing",
+                                        accessor: "Country of Listing",
+
+                                    },
+                                    {
+                                        Header: "Go Short?",
+                                        accessor: "Go Short?",
+
+                                    },
+                                    {
+                                        Header: "Limited Risk Premium",
+                                        accessor: "Limited Risk Premium",
+
+                                    },
+                                    {
+                                        Header: "Margin Rate",
+                                        accessor: "Margin Rate",
+
+                                    },
+                                    {
+                                        Header: "Stock Name",
+                                        accessor: "Stock Name",
+
+                                    },
+                                    {
+                                        Header: "Ticker",
+                                        accessor: "Ticker",
+
+                                    }
+                                ]}
+                                defaultPageSize={10}
+                                resizable={true}
+                                className="table table-stripped"
+                            />
+                            <button onClick={this.handleSaveDatabase}>Save to Database</button>
+
+                        </div>
+                    )
+                }
+            </div>
+        );
+    }
+}
+
+export default FileUploadCSV;
