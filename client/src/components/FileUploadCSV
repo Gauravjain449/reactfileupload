@@ -21,15 +21,15 @@ class FileUploadCSV extends Component {
     }
     handleSaveDatabase = async (e) => {
         e.preventDefault();
-        console.log(this.state.data.length)
-        let chunk_size = 100
+
+        let chunk_size = 500;
         let arrData = []
 
         for (let index = 0; index < this.state.data.length; index += chunk_size) {
             arrData.push(this.state.data.slice(index, index + chunk_size));
             // Do something if you want with the group
         }
-
+        console.log(arrData.length)
         for (let i = 0; i < arrData.length; i++) {
             await this.getTitle(arrData[i], i).then((res) => {
                 console.log(res);
@@ -65,7 +65,34 @@ class FileUploadCSV extends Component {
     }
 
     render() {
-        console.log(this.state.data)
+        let columns = [];
+        let data = [];
+        let _records = [];
+        if (this.state.data.length > 0) {
+            // console.log(this.state.data)
+            data = this.state.data.slice(0, 5);
+            columns = Object.keys(this.state.data[0]).map((key, id) => {
+                return {
+                    Header: key,
+                    accessor: key
+                }
+            });
+
+
+
+
+
+            let d = [];
+
+            d = data.map((key) => {
+                columns.map((header) => {
+                    d[header.Header] = (key[header.Header])
+                });
+
+            });
+            console.log(d);
+            // console.log(columns);
+        }
         return (
             <div>
                 <CSVReader
@@ -77,53 +104,58 @@ class FileUploadCSV extends Component {
                 />
                 <button onClick={this.handleImportOffer}>Import</button>
 
-                {this.state.data.length > 0 &&
+                {
+                    data.length > 0 &&
                     (
                         <div>
-                            <ReactTable
-                                data={this.state.data}
-                                columns={[
-                                    {
-                                        Header: "Country of Listing",
-                                        accessor: "Country of Listing",
+                            <br />
+                            <div className="container">
+                                {columns.map((header, index) => {
+                                    // header.Header      
+                                    const records = [];
+                                    records.push('');
+                                    data.map(x => {
+                                        if (records.indexOf(x[header.Header]) === -1) {
+                                            records.push(x[header.Header])
+                                        }
+                                    });
+                                    records.push('All');
+                                    return (<div className="row" key={index}>
+                                        <div className="col-sm">
+                                            {header.Header}
+                                        </div>
+                                        <div className="col-sm">
+                                            <div className="form-group col-md-8">
+                                                <select className="form-control">
+                                                    {
+                                                        records.length > 0 && records.map((option, i) => {
+                                                            return <option key={option} title={option} value={option}>{option}</option>;
+                                                        })
+                                                    }
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    )
 
-                                    },
-                                    {
-                                        Header: "Go Short?",
-                                        accessor: "Go Short?",
+                                })}
+                            </div>
 
-                                    },
-                                    {
-                                        Header: "Limited Risk Premium",
-                                        accessor: "Limited Risk Premium",
 
-                                    },
-                                    {
-                                        Header: "Margin Rate",
-                                        accessor: "Margin Rate",
 
-                                    },
-                                    {
-                                        Header: "Stock Name",
-                                        accessor: "Stock Name",
-
-                                    },
-                                    {
-                                        Header: "Ticker",
-                                        accessor: "Ticker",
-
-                                    }
-                                ]}
+                            {/* <ReactTable
+                                data={data}
+                                columns={columns}
                                 defaultPageSize={10}
                                 resizable={true}
                                 className="table table-stripped"
-                            />
+                            /> */}
                             <button onClick={this.handleSaveDatabase}>Save to Database</button>
 
                         </div>
                     )
                 }
-            </div>
+            </div >
         );
     }
 }
