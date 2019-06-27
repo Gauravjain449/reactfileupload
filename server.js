@@ -4,16 +4,27 @@ const fileUpload = require('express-fileupload');
 var MongoClient = require('mongodb').MongoClient;
 var Binary = require('mongodb').Binary;
 var fs = require('fs');
+var bodyParser = require('body-parser')
+var cors = require('cors')
 
 
 const app = express();
 
 app.use(fileUpload());
+app.use(bodyParser.json({ limit: '10mb', extended: true }))
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }))
+app.use(cors())
 
 var url = 'mongodb://localhost/EmployeeDB';
 var str = "";
 
 // upload endpoint
+
+app.post('/addrecords', (req, res) => {
+    console.log(req.body);
+    res.json({ index: req.body.index });
+});
+
 
 app.post('/upload', (req, res) => {
     if (req.files == null) {
