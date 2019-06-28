@@ -9,14 +9,40 @@ class FileUploadCSV extends Component {
         super(props);
         this.fileInput = React.createRef();
         this.state = ({
-            data: {}
+            columns: { Header: '', accessor: '' },
+            data: [],
+            optionsData: []
         })
     }
 
-    handleReadCSV = (data) => {
-        //console.log(data);
+    handleReadCSV = (rows) => {
+        let { columns, data, optionsData } = this.state;
+        columns = Object.keys(rows.data[0]).map((key, id) => {
+            // if (key === 'Region' || key === 'Country' || key === 'Item Type' || key === 'Sales Channel' || key === 'Order Priority') {
+            optionsData[key] = [];
+            return {
+                Header: key,
+                accessor: key
+            }
+            // }
+        });
+        console.log(columns);
+        console.log(optionsData);
+        data = rows.data.slice(0);
+        data.map((key) => {
+            columns.map(header => {
+                if (header.Header === 'Region' || header.Header === 'Country' || header.Header === 'Item Type' || header.Header === 'Sales Channel' || header.Header === 'Order Priority') {
+                    if (optionsData[header.Header].indexOf(key[header.Header]) === -1) {
+                        optionsData[header.Header].push(key[header.Header]);
+                    }
+                }
+            })
+        });
+
+        console.log(optionsData);
+
         this.setState({
-            data: data.data
+            columns, data, optionsData
         })
     }
     handleSaveDatabase = async (e) => {
@@ -65,34 +91,6 @@ class FileUploadCSV extends Component {
     }
 
     render() {
-        let columns = [];
-        let data = [];
-        let _records = [];
-        if (this.state.data.length > 0) {
-            // console.log(this.state.data)
-            data = this.state.data.slice(0, 5);
-            columns = Object.keys(this.state.data[0]).map((key, id) => {
-                return {
-                    Header: key,
-                    accessor: key
-                }
-            });
-
-
-
-
-
-            let d = [];
-
-            d = data.map((key) => {
-                columns.map((header) => {
-                    d[header.Header] = (key[header.Header])
-                });
-
-            });
-            console.log(d);
-            // console.log(columns);
-        }
         return (
             <div>
                 <CSVReader
@@ -105,21 +103,12 @@ class FileUploadCSV extends Component {
                 <button onClick={this.handleImportOffer}>Import</button>
 
                 {
-                    data.length > 0 &&
+                    this.state.data.length > 0 &&
                     (
                         <div>
                             <br />
                             <div className="container">
-                                {columns.map((header, index) => {
-                                    // header.Header      
-                                    const records = [];
-                                    records.push('');
-                                    data.map(x => {
-                                        if (records.indexOf(x[header.Header]) === -1) {
-                                            records.push(x[header.Header])
-                                        }
-                                    });
-                                    records.push('All');
+                                {this.state.columns.map((header, index) => {
                                     return (<div className="row" key={index}>
                                         <div className="col-sm">
                                             {header.Header}
@@ -128,7 +117,7 @@ class FileUploadCSV extends Component {
                                             <div className="form-group col-md-8">
                                                 <select className="form-control">
                                                     {
-                                                        records.length > 0 && records.map((option, i) => {
+                                                        this.state.optionsData[header.Header].length > 0 && this.state.optionsData[header.Header].sort().map((option, i) => {
                                                             return <option key={option} title={option} value={option}>{option}</option>;
                                                         })
                                                     }
