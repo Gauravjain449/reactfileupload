@@ -1,56 +1,31 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import { CSVReader } from 'react-papaparse';
 import ReactTable from 'react-table'
 import 'react-table/react-table.css'
 import axios from 'axios';
+import MultiDropDown from '../utils/MultiDropDown';
 
 class FileUploadCSV extends Component {
     constructor(props) {
         super(props);
+        this.OnFilterChange = this.OnFilterChange.bind(this);       
         this.fileInput = React.createRef();
+
         this.state = ({
+            arrFlt: [],
+            arrSltFlt: [],
             columns: { Header: '', accessor: '' },
             data: [],
-            optionsData: []
+            optionsData: [],
+            arrSltdFlt: [],
+            compShouldCount: 0,
+            arrFltData: []
         })
     }
-
-    handleReadCSV = (rows) => {
-        let { columns, data, optionsData } = this.state;
-        columns = Object.keys(rows.data[0]).map((key, id) => {
-            // if (key === 'Region' || key === 'Country' || key === 'Item Type' || key === 'Sales Channel' || key === 'Order Priority') {
-            optionsData[key] = [];
-            return {
-                Header: key,
-                accessor: key
-            }
-            // }
-        });
-        console.log(columns);
-        console.log(optionsData);
-        data = rows.data.slice(0);
-        data.map((key) => {
-            columns.map(header => {
-                if (header.Header === 'Region' || header.Header === 'Country' || header.Header === 'Item Type' || header.Header === 'Sales Channel' || header.Header === 'Order Priority') {
-                    if (optionsData[header.Header].indexOf(key[header.Header]) === -1) {
-                        optionsData[header.Header].push(key[header.Header]);
-                    }
-                }
-            })
-        });
-
-        console.log(optionsData);
-
-        this.setState({
-            columns, data, optionsData
-        })
-    }
-    handleSaveDatabase = async (e) => {
+    handleSubmit = async (e) => {
         e.preventDefault();
-
-        let chunk_size = 500;
+        let chunk_size =250;
         let arrData = []
-
         for (let index = 0; index < this.state.data.length; index += chunk_size) {
             arrData.push(this.state.data.slice(index, index + chunk_size));
             // Do something if you want with the group
@@ -61,6 +36,87 @@ class FileUploadCSV extends Component {
                 console.log(res);
             })
         }
+    }
+
+    shouldComponentUpdate(nextProps, nextState) {
+        if (this.state.compShouldCount !== nextState.compShouldCount)
+            return false;
+
+        return true;
+    }
+
+    set_ArrSltdFlt = (target) => {
+        let { arrSltdFlt } = this.state;
+        let index = arrSltdFlt.findIndex((item) => {
+            return item.hasOwnProperty(target)
+        });
+        if (index !== -1) {
+            arrSltdFlt = [
+                ...arrSltdFlt.slice(0, index),
+                ...arrSltdFlt.slice(index + 1)
+            ]
+        }
+        return arrSltdFlt;
+    }
+
+    handleSelect = (e) => {
+        let { arrSltdFlt, compShouldCount } = this.state;
+        compShouldCount = compShouldCount + 1;
+        let d = {}
+        d[e.target.name] = e.target.value
+        arrSltdFlt = this.set_ArrSltdFlt(e.target.name);
+        arrSltdFlt.push(d)
+        this.setState({ arrSltdFlt, compShouldCount })
+
+    }
+    handleSearch = () => {
+        let { arrSltdFlt, data, arrFltData } = this.state;
+        arrFltData = data.filter((x) => {
+            for (let y in arrSltdFlt) {
+                if (x[Object.keys(arrSltdFlt[y])[0]] === undefined || x[Object.keys(arrSltdFlt[y])[0]].trim() != Object.values(arrSltdFlt[y])[0].trim())
+                    return false;
+            }
+            return true;
+        });
+        this.setState({ arrFltData })
+        // console.log(arrSltdFlt);
+        // console.log(arrFltData);
+    }
+    OnFilterChange(e) {
+        let { arrSltFlt, data, optionsData, arrSltdFlt } = this.state;
+        if (e.target.checked) {
+            let value = e.target.value;
+            arrSltFlt.push(value);
+            data.map((rows) => {
+                if (optionsData[value].indexOf(rows[value]) === -1) {
+                    optionsData[value].push(rows[value]);
+                }
+            });
+        }
+        else {
+            arrSltFlt = arrSltFlt.filter((item) => item != e.target.value);
+        }
+        // Check again
+        arrSltdFlt = this.set_ArrSltdFlt(e.target.value);
+        this.setState({ arrSltFlt, arrSltdFlt });
+    }
+
+    handleReadCSV = (rows) => {
+        let { arrFlt, columns, data, optionsData } = this.state;
+        data = rows.data.slice(0);
+        columns = Object.keys(rows.data[0]).map((key, id) => {
+            arrFlt.push(key);
+            optionsData[key] = [];
+            return {
+                Header: key,
+                accessor: key
+            }
+        });
+        this.setState({
+            arrFlt, columns, data, optionsData
+        })
+
+
     }
 
     getTitle = (data, index) => {
@@ -91,8 +147,9 @@ class FileUploadCSV extends Component {
     }
 
     render() {
+        console.log('Render Call');
         return (
-            <div>
+            <React.Fragment>
                 <CSVReader
                     onFileLoaded={this.handleReadCSV}
                     inputRef={this.fileInput}
@@ -102,49 +159,80 @@ class FileUploadCSV extends Component {
                 />
                 <button onClick={this.handleImportOffer}>Import</button>
 
+                <hr />
                 {
                     this.state.data.length > 0 &&
                     (
-                        <div>
-                            <br />
-                            <div className="container">
-                                {this.state.columns.map((header, index) => {
-                                    return (<div className="row" key={index}>
-                                        <div className="col-sm">
-                                            {header.Header}
-                                        </div>
-                                        <div className="col-sm">
-                                            <div className="form-group col-md-8">
-                                                <select className="form-control">
-                                                    {
-                                                        this.state.optionsData[header.Header].length > 0 && this.state.optionsData[header.Header].sort().map((option, i) => {
-                                                            return <option key={option} title={option} value={option}>{option}</option>;
-                                                        })
-                                                    }
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    )
-
-                                })}
+                        <React.Fragment>
+                            <div className="input-group">
+                                <div className="input-group-prepend">
+                                    <span className="input-group-text">Choose Filter's </span>
+                                </div>
+                                <MultiDropDown
+                                    name="Filters"
+                                    id="csvFilters"
+                                    divClassName="form-control"
+                                    value={this.state.arrSltFlt}
+                                    options={this.state.arrFlt}
+                                    onChange={this.OnFilterChange}
+                                    error=""
+                                />
                             </div>
+                            <hr />
 
 
+                            {this.state.arrSltFlt.map((fltCol, index) => {
+                                return (
 
-                            {/* <ReactTable
-                                data={data}
-                                columns={columns}
-                                defaultPageSize={10}
-                                resizable={true}
-                                className="table table-stripped"
-                            /> */}
-                            <button onClick={this.handleSaveDatabase}>Save to Database</button>
+                                    <React.Fragment key={fltCol}>
 
-                        </div>
+                                        <div className="input-group">
+                                            <div className="input-group-prepend">
+                                                <span className="input-group-text"> {fltCol}</span>
+                                            </div>
+                                            <select name={fltCol} className="form-control" onChange={this.handleSelect}>
+                                                {
+                                                    this.state.optionsData[fltCol].length > 0 &&
+                                                    this.state.optionsData[fltCol].sort().map((option, i) => {
+                                                        return <option key={option} title={option} value={option}>{option}</option>;
+                                                    })
+                                                }
+                                            </select>
+
+                                        </div>
+
+                                        <hr />
+
+                                    </React.Fragment>
+                                )
+                            })}
+                            <button onClick={this.handleSearch}>Search</button>
+                            <hr />
+
+                        </React.Fragment>
+
+
                     )
                 }
-            </div >
+                {this.state.arrFltData.length > 0 &&
+                    (
+                        <React.Fragment>
+                            <div className="table-responsive">
+                                <ReactTable
+                                    data={this.state.arrFltData.slice(0, 10)}
+                                    columns={this.state.columns}
+                                    defaultPageSize={5}
+                                    resizable={true}
+                                    className="table table-stripped"
+                                />
+
+                            </div>
+                            <button onClick={this.handleSubmit}>Submit</button>
+                        </React.Fragment>
+
+                    )}
+
+            </React.Fragment>
         );
     }
 }
