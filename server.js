@@ -22,20 +22,21 @@ var str = "";
 
 app.post('/addrecords', (req, apires) => {
     MongoClient.connect(url, function (err, db) {
+
         if (err) {
             console.log("Please check you db connection parameters");
         } else {
             console.log("Connection Succeeded!");
             var dbo = db.db("csvdb");
             var myobj = req.body.foo;
-            console.log(myobj);
+            console.log();
             dbo.collection("csvcollections").insertMany(myobj, function (err, res) {
-                if (err) throw err;               
+                if (err) throw err;
                 console.log("Number of documents inserted: " + res.insertedCount);
                 db.close();
-                apires.json({ index: res.insertedCount });
+                apires.json({ index: req.body.index + '-' + req.get("content-length") });
             });
-           // apires.json({ index: req.body.index });
+            // apires.json({ index: req.body.index });
         }
 
     });
