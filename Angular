@@ -1,0 +1,37 @@
+selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+
+import { Component } from '@angular/core';
+import Papa from 'papaparse';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent {
+  fileChange(e) {
+    console.log('Hello');
+    let _columns = [];
+    let _data = [];
+    let _filemb = e.target.files[0].size / 1000000;
+    Papa.parse(e.target.files[0], {
+      worker: _filemb > 50 ? true : false,
+      header: true,
+      step: function (row) {
+        _data.push(row.data);
+      },
+      complete: function () {        
+        _columns = Object.keys(_data[0]).map((key, id) => {
+          return {
+            title: key,
+            field: key
+          }
+        });
+        console.log(_data);
+      }
+    });
+  }
+
+}
