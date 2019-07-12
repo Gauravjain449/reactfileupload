@@ -6,6 +6,10 @@
     "@material-ui/icons": "^4.2.1",
     "axios": "^0.18.0",
     "jquery": "^3.4.1",
+<<<<<<< HEAD
+=======
+    "lz-string": "^1.4.4",
+>>>>>>> 4bf88218cb48ddbf489ece5fe57f39ce5717cfdf
     "material-table": "^1.40.1",
     "papaparse": "^5.0.0",
     "react": "^16.8.6",
@@ -15,7 +19,10 @@
     "react-fade": "^1.1.1",
     "react-loader": "^2.4.5",
     "react-loader-spinner": "^2.3.0",
+<<<<<<< HEAD
     "react-loading-overlay": "^1.0.1",
+=======
+>>>>>>> 4bf88218cb48ddbf489ece5fe57f39ce5717cfdf
     "react-papaparse": "^1.0.5",
     "react-scripts": "3.0.1",
     "react-table": "^6.10.0"
