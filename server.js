@@ -1,115 +1,153 @@
-var Promise = require('promise');
 const express = require('express');
-const fileUpload = require('express-fileupload');
 var MongoClient = require('mongodb').MongoClient;
-var Binary = require('mongodb').Binary;
-var fs = require('fs');
+var bodyParser = require('body-parser')
+var cors = require('cors')
 
 
 const app = express();
+app.use(bodyParser.json({ limit: '10mb', extended: true }))
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }))
+app.use(cors())
 
-app.use(fileUpload());
-
-var url = 'mongodb://localhost/EmployeeDB';
+var url = 'mongodb://localhost/';
+//var url = "mongodb://gauravjain449:vxj6nkuYBmnaTobGucZORzXaanJHzFYcVmyGGpdlsjz94G4hCFP6mv1vCh4n3r5qQDVGIHxvp0NJ8nN9QdA1xg==@gauravjain449.documents.azure.com:10255/?ssl=true";
 var str = "";
 
-// upload endpoint
 
-app.post('/upload', (req, res) => {
-    if (req.files == null) {
-        return res.status(400).json({ msg: 'No File uploaded' });
-    }
-    const file = req.files.file;
-    file.mv(`${__dirname}/client/public/upload/${file.name}`, err => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send(err);
+
+app.post('/addrecords', (req, res) => {
+    MongoClient.connect(url, function (err, db) {
+        try {
+            if (err) {
+                res.json({ index: req.body.index + '- "Please check you db connection parameters' });
+                console.log("Please check you db connection parameters");
+            } else {
+                console.log("Connection Succeeded!");
+                console.log(req.body.foo);
+                var dbo = db.db("csv");
+                var myobj = req.body.foo;
+                dbo.collection(req.body.mongoColName).insertMany(myobj, function (err, innerRes) {
+                    if (err) console.log(err);
+                    res.json({ index: req.body.index + '-' + req.get("content-length") });
+                    console.log("Number of documents inserted: " + innerRes.insertedCount);
+                    db.close();
+                });
+            }
         }
-        res.json({ fileName: file.name, filePath: `/upload/${file.name}` });
+        catch (err) {
+            console.log(err);
+            res.json({ index: req.body.index + '-' + err.message });
+        }
+        finally {
+            db.close();
+        }
     });
+
 });
 
 
-app.post('/mongoupload', (req, res) => {
+app.get('/getCollections', (req, res) => {
     MongoClient.connect(url, function (err, db) {
         if (err) {
+            res.json({ message: 'Please check you db connection parameters' });
             console.log("Please check you db connection parameters");
         } else {
-            console.log("Connection success");
-            // console.log(req.files.file.data);
-            // var data = fs.readFileSync('C:\\Users\\Gaurav\\Downloads\\IMG_20190514_121434.jpg');
-            var insert_data = {};
-            insert_data.file_data = Binary(req.files.file.data);
-            insert_data.id = 207;
-
-            var collection = db.collection('files');
-            collection.insert(insert_data, function (err, result) { // If the collection does not exist, then the insert() method will create the collection.
-                if (err) {
-                    console.log(err);
+            console.log("Connection Succeeded!");
+            var dbo = db.db("csv");
+            var _cols = [];
+            dbo.collections(function (e, cols) {
+                try {
+                    cols.forEach(function (col) {
+                        _cols.push(col.collectionName);
+                    });
+                    res.json({ collections: _cols });
                 }
-                else {
-                    console.log('Inserted!!');
+                catch (err) {
+                    console.log(err);
+                    res.json({ message: err.message });
+                }
+                finally {
+                    db.close();
                 }
             });
-
-            var cursor = db.collection('files').find({ "id": 207 });
-            var i = 0;
-            cursor.each(function (err, item) {
-                console.log(i);
-                console.log(item);
-                i++;
-                if (err) {
-                    console.log(err);
-                }
-                else {
-                    if (item) {
-                        console.log(item.file_data.buffer);
-                        fs.writeFile('C:\\Users\\Gaurav\\Downloads\\GauravJain1.jpg', item.file_data.buffer, function (err) {
-                            if (err) throw err;
-                            console.log('Sucessfully saved!');
-                        });
-                    }
-                }
-
-            });
-
         }
     });
+
 });
 
-var azuremongourl = "mongodb://gauravjain449:fBTaVMbDnbGRS8H0965DQNSBQ5BiCjcgsDeAXN5Up6LlPvxvTpOx1PAIIR9noXodnldRnXNYLdv6Zn1My8bUlQ==@gauravjain449.documents.azure.com:10255/?ssl=true";
-app.post('/azuremongoupload', (req, res) => {
-    MongoClient.connect(azuremongourl, function (err, db) {
+app.get('/getColDocs', (req, res) => {
+    console.log(req.query);
+    MongoClient.connect(url, function (err, db) {
         if (err) {
+            res.json({ message: 'Please check you db connection parameters' });
             console.log("Please check you db connection parameters");
         } else {
-            console.log("Connection success");
-            var BinaryData = Binary(req.files.file.data);
-            var bufToSend = new Buffer(3 + 100 + BinaryData.length);
-            bufToSend.writeUInt32LE(INTEGER, 0);
-            bufToSend.write(STRING, 4, STRING.length, "ascii");
-            BinaryData.copy(bufToSend, 105, 0, BinaryData.length);
+            console.log("Connection Succeeded!");
+            var dbo = db.db("csv");
+            //  var query = { $and: [{ _id: { $gte: parseFloat(req.query.first) } }, { _id: { $lte: parseFloat(req.query.last) } }] }
+            var query = { _id: { $gt: parseInt(req.query.id) } };
+            dbo.collection(req.query.colName).find(query).sort({ _id: 1 }).limit(parseInt(req.query.limit)).toArray(function (err, result) {
+                if (err) throw err;
+                //console.log(result);
+                //res.send(result);
 
-            var insert_data = {};
-            insert_data.file_data = BinaryData;//Binary(req.files.file.data);  
-
-            insert_data.id = 2;
-            var collection = db.collection('files');
-            //console.log(collection);
-            collection.insert(insert_data, function (err, result) { // If the collection does not exist, then the insert() method will create the collection.
-                if (err) {
-                    // console.log(err);
-                    console.log('Error');
-                }
-                else {
-                    console.log('Inserted!!');
-                }
+                res.json({ data: result });
+                // console.log(res.get("content-length"));
+                // res.json({ data: 3 });
+                db.close();
             });
-
         }
-
-        db.close();
     });
+
+});
+
+app.post('/updelrecords', (req, res) => {
+    MongoClient.connect(url, function (err, db) {
+        try {
+            if (err) {
+                res.json({ error: + '- "Please check you db connection parameters' });
+                console.log("Please check you db connection parameters");
+            } else {
+                console.log("Connection Succeeded!");
+                var dbo = db.db("csv");
+                var myobj = req.body.foo;
+                // console.log('Gaurav')
+                // console.log(myobj)
+                myobj.forEach((data, index, arr) => {
+                    //console.log(data._id)
+                    //console.log(index)
+                    //console.log(arr)
+                    if (data.isDeleted == true) {
+                        var myquery = { _id: data._id };
+                        dbo.collection(req.body.mongoColName).deleteOne(myquery, function (err, obj) {
+                            if (err) throw err;
+                            db.close();
+                            console.log("1 document deleted");
+                        });
+                    }
+                    else if (data.isDeleted == false) {
+                        var myquery = { _id: data._id };
+                        var newvalues = { $set: data };
+                        dbo.collection(req.body.mongoColName).updateOne(myquery, newvalues, function (err, res) {
+                            if (err) throw err;
+                            console.log("1 document updated");
+                            db.close();
+                        });
+                    }
+                })
+
+                res.json({ message: 'Hello' });
+            }
+        }
+        catch (err) {
+            console.log(err);
+            res.json({ error: err.message });
+        }
+        finally {
+            db.close();
+        }
+    });
+
 });
 
 app.listen(5000, () => {

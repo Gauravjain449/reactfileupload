@@ -1,6 +1,10 @@
 import React from 'react';
 import './App.css';
-import FileUpload from './components/FileUpload';
+// import FileUpload from './components/FileUpload';
+// import FileReadercsv from './components/FileReadercsv'
+// import FadeInFadeOut from './test/FadeInFadeOut'
+// import HooksFileUpload from './components/HooksFileReader'
+import FileUploadReader from './components/csvFileReader/FileUploadReader.component'
 
 function App() {
   return (
@@ -9,8 +13,11 @@ function App() {
         <i className="fab fa-react" />
         React File Upload
       </h4>
-      <FileUpload />
-
+      {/* <FileUpload /> */}
+      {/* <FileReadercsv /> */}
+      {/* <FadeInFadeOut show={true}/> */}
+      {/* <HooksFileUpload /> */}
+      <FileUploadReader />
     </div>
   );
 }

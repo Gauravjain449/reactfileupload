@@ -13,6 +13,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
     "express": "^4.17.0",
     "express-fileupload": "^1.1.4",
     "mongodb": "^2.2.36",

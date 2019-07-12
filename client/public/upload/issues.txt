@@ -1,0 +1,13 @@
+"mongodb": "^2.2.36",
+"mongoose": "^5.5.8"
+
+https://medium.com/@dineshuthakota/how-to-save-file-in-mongodb-using-node-js-1a9d09b019c1 ( Note that mongodb document size limit is 16 megabytes.)
+
+ C:\Program Files\MongoDB\Server\4.0\bin\mongod.exe // to start mongo server and it should be start ... working on mongo db
+
+ https://docs.mongodb.com/manual/reference/method/db.collection.findOne/
+
+************
+ Error--> 'Message: {"Errors":["Request size is too large"]}
+https://blogs.msdn.microsoft.com/bigdatasupport/2015/09/02/dealing-with-requestratetoolarge-errors-in-azure-documentdb-and-testing-performance/
+************
