@@ -23,7 +23,7 @@ function Routers() {
                 <hr />
 
                 <Route exact path="/" component={() => {
-                    return 'File Upload POC'
+                    return 'Home Page'
                 }} />
                 <Route path="/Upload" component={FileUpload} />
                 <Route path="/Update" component={FileUpdate} />
